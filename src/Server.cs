@@ -39,10 +39,25 @@ class SocketConnection
             {
                 var text = System.Text.Encoding.UTF8.GetString(buffer);
                 var parser = new LrParser(text);
-                var command = ParseValue(ref parser);
+                var segments = ParseValue(ref parser);
+
+                var type = segments[0].ToLowerInvariant();
+
+                Command? command = type switch
+                {
+                    "ping" => new Ping(),
+                    "echo" => new Echo { Message = segments[1]},
+                    "get" => new Get { Key = segments[1]},
+                    "set" => segments.Length > 4 && segments[3].ToLowerInvariant() == "px" ? 
+                                new Set { Key = segments[1], Value = segments[2], Px = int.Parse(segments[4]) } :
+                                new Set { Key = segments[1], Value = segments[2] },
+                    _ => null
+                };
                 
-                _eventLoop.AddCommand(_socket, command);
-                Console.WriteLine(command[0] + " " + _socket.Handle);
+                Console.WriteLine(command);
+                
+                if (command is not null)
+                    _eventLoop.AddCommand(_socket, command);
             }
         }
 
@@ -55,7 +70,19 @@ class SocketConnection
             return ParseArray(ref parser);
         if (type == '$')
             return new[] { ParseBulkString(ref parser) };
+        if (type == ':')
+            return new[] { ParseInteger(ref parser) };
         return Array.Empty<string>();
+    }
+
+    private string ParseInteger(ref LrParser parser)
+    {
+        var sign = 1;
+        if (parser.TryMatch("+")) sign = 1;
+        else if (parser.TryMatch("-")) sign = -1;
+        var number = parser.EatNumber();
+        parser.TryMatch("\r\n");
+        return (sign * number).ToString();
     }
 
     private string ParseBulkString(ref LrParser parser)
@@ -81,3 +108,4 @@ class SocketConnection
         return result;
     }
 }
+

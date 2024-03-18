@@ -3,13 +3,18 @@ using System.Net.Sockets;
 
 namespace codecrafters_redis;
 
+public record CacheEntry
+{
+    public string Value { get; init; }
+    public DateTime? ExpiresOn { get; init; }
+}
 public class EventLoop
 {
-    private readonly ConcurrentQueue<(Socket, string[])> _commandQueue = new();
+    private readonly ConcurrentQueue<(Socket, Command)> _commandQueue = new();
     
-    private Dictionary<string, string> _cache = new ();
+    private readonly Dictionary<string, CacheEntry> _cache = new ();
     
-    public void AddCommand(Socket socket, string[] command)
+    public void AddCommand(Socket socket, Command command)
     {
         _commandQueue.Enqueue((socket, command));
     }
@@ -22,51 +27,60 @@ public class EventLoop
             {
                 var socket = socketAndCommand.Item1;
                 var command = socketAndCommand.Item2;
-                var commandType = command[0].ToLowerInvariant();
-                if (commandType == "ping")
-                {
-                    Console.WriteLine("Pong " + socket.Handle );
-                    var bytes = System.Text.Encoding.UTF8.GetBytes(SimpleString("PONG"));
-                    socket.Send(bytes);                    
-                }
-                else if (commandType == "echo")
-                {
-                    Console.WriteLine("Echo " + socket.Handle );
-                    var bytes = System.Text.Encoding.UTF8.GetBytes(BulkString(command[1]));
-                    socket.Send(bytes);                    
-                }
-
-                else if (commandType == "set")
-                {
-                    Console.WriteLine($"set " + socket.Handle + ":: " + command[1] + " => " + command[2] );
-                    _cache[command[1]] = command[2];
-                    var bytes = System.Text.Encoding.UTF8.GetBytes(SimpleString("OK"));
-                    socket.Send(bytes);                    
-                }
                 
-                else if (commandType == "get")
+                var response = command switch
                 {
-                    Console.WriteLine($"get " + socket.Handle + ":: " + command[1] );
-                    if (_cache.TryGetValue(command[1], out var value))
-                    {
-                        var bytes = System.Text.Encoding.UTF8.GetBytes(BulkString(value));
-                        socket.Send(bytes);      
-                    }
-                    else
-                    {
-                        var bytes = System.Text.Encoding.UTF8.GetBytes(NullBulkString);
-                        socket.Send(bytes);
-                    }
-                    
-                 
-                }
-                
+                    Ping => ProcessPing(),
+                    Echo echo => ProcessEcho(echo),
+                    Get get => ProcessGet(get),
+                    Set set => ProcessSet(set),
+                    _ => throw new NotImplementedException()
+                };
+                var bytes = System.Text.Encoding.UTF8.GetBytes(response);
+                socket.Send(bytes);   
             }   
             
             Thread.Sleep(100);
         }
     }
 
+    private string ProcessSet(Set set)
+    {
+        if (set.Px.HasValue)
+            Console.WriteLine("Will Expires " + DateTime.UtcNow + TimeSpan.FromMilliseconds(set.Px.Value));
+        else
+            Console.WriteLine("Will not Expiry");
+        
+        _cache[set.Key] = new CacheEntry
+        {
+            Value = set.Value,
+            ExpiresOn = set.Px.HasValue ? (DateTime.UtcNow + TimeSpan.FromMilliseconds(set.Px.Value+100)) : null
+        };
+
+        return SimpleString("OK");
+    }
+
+    private string ProcessGet(Get get)
+    {
+        if (_cache.TryGetValue(get.Key, out var cacheEntry))
+        {
+            if (cacheEntry.ExpiresOn.HasValue)
+                Console.WriteLine("Expires " + cacheEntry.ExpiresOn.Value.ToString("O") + " Now is " + DateTime.UtcNow.ToString("O"));
+            else
+                Console.WriteLine("Does not Expiry");
+            
+            if (!cacheEntry.ExpiresOn.HasValue || (cacheEntry.ExpiresOn.Value > DateTime.UtcNow))
+            {
+                return BulkString(cacheEntry.Value);
+            }
+        }
+
+        return NullBulkString;
+    }
+
+    private string ProcessEcho(Echo echo) => BulkString(echo.Message);
+    private string ProcessPing() => SimpleString("PONG");
+    
     private string SimpleString(string str) => $"+{str}\r\n";
     private string BulkString(string str) => $"${str.Length}\r\n{str}\r\n";
     private const string NullBulkString = "$-1\r\n";
