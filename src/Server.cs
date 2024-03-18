@@ -10,7 +10,12 @@ server.Start();
 var socket = server.AcceptSocket(); // wait for client
 
 var buffer = new byte[1024];
-socket.Receive(buffer);
 
-var bytes = System.Text.Encoding.UTF8.GetBytes("+PONG\r\n");
-socket.Send(bytes);
+while (true)
+{
+    socket.Receive(buffer);
+    var bytes = System.Text.Encoding.UTF8.GetBytes("+PONG\r\n");
+    socket.Send(bytes);
+}
+
+
