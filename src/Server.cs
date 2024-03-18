@@ -37,44 +37,47 @@ class SocketConnection
         {
             if (_socket.Receive(buffer) > 0)
             {
+                var text = System.Text.Encoding.UTF8.GetString(buffer);
+                var parser = new LrParser(text);
+                var command = ParseValue(ref parser);
                 
-                
-                _eventLoop.AddCommand(_socket);
-                Console.WriteLine("Ping " + _socket.Handle);
+                _eventLoop.AddCommand(_socket, command);
+                Console.WriteLine(command[0] + " " + _socket.Handle);
             }
         }
 
-    }  
+    }
+
+    private string[] ParseValue(ref LrParser parser)
+    {
+        var type = parser.EatChar();
+        if (type == '*')
+            return ParseArray(ref parser);
+        if (type == '$')
+            return new[] { ParseBulkString(ref parser) };
+        return Array.Empty<string>();
+    }
+
+    private string ParseBulkString(ref LrParser parser)
+    {
+        var length = parser.EatNumber();
+        parser.TryMatch("\r\n");
+        var text = parser.EatString(length);
+        parser.TryMatch("\r\n");
+        return text;
+    }
+
+    private string[] ParseArray(ref LrParser parser)
+    {
+        var numberOfElements = parser.EatNumber();
+        parser.TryMatch("\r\n");
+
+        var result = new string[numberOfElements];
+        for (var i = 0; i < numberOfElements; i++)
+        {
+            result[i] = ParseValue(ref parser)[0];
+        }
+
+        return result;
+    }
 }
-
-
-
-//
-//
-// var backgroundThread = new Thread(new ThreadStart(Program.DoSomeHeavyLifting));
-// // Start thread
-// backgroundThread.Start();
-//
-// var connection = server.AcceptSocket(); // wait for client
-// Thread(() => {
-//     var buffer = new byte[1024];
-//     while (true)
-//     {
-//         connection.Receive(buffer);
-//         var bytes = System.Text.Encoding.UTF8.GetBytes("+PONG\r\n");
-//         connection.Send(bytes);
-//     }
-// });
-//
-//
-//
-// var buffer = new byte[1024];
-//
-// while (true)
-// {
-//     connection.Receive(buffer);
-//     var bytes = System.Text.Encoding.UTF8.GetBytes("+PONG\r\n");
-//     connection.Send(bytes);
-// }
-
-
