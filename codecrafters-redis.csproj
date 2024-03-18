@@ -6,6 +6,7 @@
     <RootNamespace>codecrafters_redis</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
   </PropertyGroup>
 
 </Project>

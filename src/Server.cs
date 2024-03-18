@@ -37,6 +37,8 @@ class SocketConnection
         {
             if (_socket.Receive(buffer) > 0)
             {
+                
+                
                 _eventLoop.AddCommand(_socket);
                 Console.WriteLine("Ping " + _socket.Handle);
             }
