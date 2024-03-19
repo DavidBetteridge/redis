@@ -55,6 +55,7 @@ public class Program
                     {
                         "ping" => new Ping(),
                         "echo" => new Echo { Message = segments[1] },
+                        "info" => new Info { Section = segments[1] },
                         "get" => new Get { Key = segments[1] },
                         "set" => segments.Length > 4 && segments[3].ToLowerInvariant() == "px"
                             ? new Set { Key = segments[1], Value = segments[2], Px = int.Parse(segments[4]) }

@@ -20,3 +20,8 @@ public record Set : Command
     public string Value { get; init; } = default!;
     public int? Px { get; init; }
 }
+
+public record Info : Command
+{
+    public string Section { get; init; } = default!;
+}

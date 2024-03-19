@@ -34,6 +34,7 @@ public class EventLoop
                     Echo echo => ProcessEcho(echo),
                     Get get => ProcessGet(get),
                     Set set => ProcessSet(set),
+                    Info info => ProcessInfo(info),
                     _ => throw new NotImplementedException()
                 };
                 var bytes = System.Text.Encoding.UTF8.GetBytes(response);
@@ -64,6 +65,11 @@ public class EventLoop
         }
 
         return NullBulkString;
+    }
+
+    private string ProcessInfo(Info info)
+    {
+        return BulkString("role:master");
     }
 
     private string ProcessEcho(Echo echo) => BulkString(echo.Message);
