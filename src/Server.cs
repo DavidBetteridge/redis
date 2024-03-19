@@ -78,26 +78,26 @@ class SocketConnection
     private string ParseInteger(ref LrParser parser)
     {
         var sign = 1;
-        if (parser.TryMatch("+")) sign = 1;
-        else if (parser.TryMatch("-")) sign = -1;
+        if (parser.TryMatch('+')) sign = 1;
+        else if (parser.TryMatch('-')) sign = -1;
         var number = parser.EatNumber();
-        parser.TryMatch("\r\n");
+        parser.Match("\r\n");
         return (sign * number).ToString();
     }
 
     private string ParseBulkString(ref LrParser parser)
     {
         var length = parser.EatNumber();
-        parser.TryMatch("\r\n");
+        parser.Match("\r\n");
         var text = parser.EatString(length);
-        parser.TryMatch("\r\n");
+        parser.Match("\r\n");
         return text;
     }
 
     private string[] ParseArray(ref LrParser parser)
     {
         var numberOfElements = parser.EatNumber();
-        parser.TryMatch("\r\n");
+        parser.Match("\r\n");
 
         var result = new string[numberOfElements];
         for (var i = 0; i < numberOfElements; i++)

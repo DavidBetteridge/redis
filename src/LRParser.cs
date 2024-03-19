@@ -24,20 +24,13 @@ public ref struct LrParser
         return false;
     }
     
-    public bool TryMatch(string match)
+    public void Match(string match)
     {
-        if (!EOF && _line.StartsWith(match))
+        if (EOF || !_line.StartsWith(match))
         {
-            _line = _line[(match.Length)..];
-            return true;
+            throw new ParsingException($"Expected {match}");
         }
-        return false;
-    }
-    
-    public void SkipWhitespace()
-    {
-        while (!EOF &&  char.IsWhiteSpace(_line[0]))
-            _line = _line[1..];
+        _line = _line[(match.Length)..];
     }
 
     public char EatChar()
@@ -46,8 +39,6 @@ public ref struct LrParser
         _line = _line[1..];
         return c;
     }
-
-    public string EatToEnd() => _line.ToString();
 
     public int EatNumber()
     {
@@ -66,5 +57,12 @@ public ref struct LrParser
         var str = _line[..length];
         _line = _line[length..];
         return str.ToString();
+    }
+}
+
+public class ParsingException : Exception
+{
+    public ParsingException(string message) : base(message)
+    {
     }
 }
