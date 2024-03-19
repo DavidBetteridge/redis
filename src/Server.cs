@@ -4,7 +4,7 @@ using codecrafters_redis;
 
 public class Program
 {
-    public void Main(string[] args)
+    public static void Main(string[] args)
     {
         var port = 6379;
         if (args.Length > 1 && args[0] == "--port")
