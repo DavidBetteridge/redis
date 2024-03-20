@@ -8,9 +8,17 @@ public record CacheEntry
     public string Value { get; init; } = default!;
     public DateTime? ExpiresOn { get; init; }
 }
+
+public record CommandParams
+{
+    public Socket Socket { get; init; } = default!;
+    public Command Command { get; init; } = default!;
+    public bool AsReplica { get; init; }
+}
+
 public class EventLoop
 {
-    private readonly BlockingCollection<(Socket, Command)> _commandQueue = new();
+    private readonly BlockingCollection<CommandParams> _commandQueue = new();
     
     private readonly Dictionary<string, CacheEntry> _cache = new ();
     private readonly ServerInfo _serverInfo;
@@ -20,19 +28,20 @@ public class EventLoop
         _serverInfo = serverInfo;
     }
     
-    public void AddCommand(Socket socket, Command command)
+    public void AddCommand(CommandParams commandParams)
     {
-        _commandQueue.Add((socket, command));
+        _commandQueue.Add(commandParams);
     }
     
     public void ProcessCommands()
     {
         while (true)
         {
-            if (_commandQueue.TryTake(out var socketAndCommand))
+            if (_commandQueue.TryTake(out var commandParams))
             {
-                var socket = socketAndCommand.Item1;
-                var command = socketAndCommand.Item2;
+                var socket = commandParams.Socket;
+                var command = commandParams.Command;
+                var asReplica = commandParams.AsReplica;
                 
                 var response = command switch
                 {
@@ -45,7 +54,7 @@ public class EventLoop
                     Psync detail => ProcessPsync(detail, socket),
                     _ => throw new NotImplementedException()
                 };
-                if (response is not null)
+                if (response is not null && !asReplica)
                 {
                     var bytes = System.Text.Encoding.UTF8.GetBytes(response);
                     socket.Send(bytes);
