@@ -42,11 +42,14 @@ public class EventLoop
                     Set detail => ProcessSet(detail),
                     Info detail => ProcessInfo(detail),
                     Replconf detail => ProcessReplconf(detail),
-                    Psync detail => ProcessPsync(detail),
+                    Psync detail => ProcessPsync(detail, socket),
                     _ => throw new NotImplementedException()
                 };
-                var bytes = System.Text.Encoding.UTF8.GetBytes(response);
-                socket.Send(bytes);   
+                if (response is not null)
+                {
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(response);
+                    socket.Send(bytes);
+                }
             }   
         }
     }
@@ -88,9 +91,17 @@ public class EventLoop
         return BulkString(result);
     }
 
-    private string ProcessPsync(Psync cmd)
+    private string? ProcessPsync(Psync cmd, Socket socket)
     {
-        return SimpleString($"FULLRESYNC {_serverInfo.MasterReplid} {_serverInfo.MasterReplOffset}");
+        var response = SimpleString($"FULLRESYNC {_serverInfo.MasterReplid} {_serverInfo.MasterReplOffset}");
+        var bytes = System.Text.Encoding.UTF8.GetBytes(response);
+        socket.Send(bytes);
+        
+        var rdb = Convert.FromBase64String(EmptyRDBFile);
+        var preamble = System.Text.Encoding.UTF8.GetBytes($"${rdb.Length}\r\n");
+        socket.Send(rdb); 
+        socket.Send(preamble);
+        return null;
     }
     
     private string ProcessEcho(Echo echo) => BulkString(echo.Message);
@@ -101,4 +112,6 @@ public class EventLoop
     private string BulkString(string str) => $"${str.Length}\r\n{str}\r\n";
     
     private const string NullBulkString = "$-1\r\n";
+
+    private const string EmptyRDBFile = "UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog==";
 }
