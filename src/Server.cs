@@ -48,6 +48,22 @@ public class Program
             var stream = client.GetStream();
             var bytes = System.Text.Encoding.UTF8.GetBytes("*1\r\n$4\r\nping\r\n");
             stream.Write(bytes, 0, bytes.Length);
+            
+            var data = new Byte[256];
+            var bytesRead = stream.Read(data, 0, data.Length);
+            var responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytesRead);
+           
+            bytes = System.Text.Encoding.UTF8.GetBytes("*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n");
+            stream.Write(bytes, 0, bytes.Length);
+            
+            bytesRead = stream.Read(data, 0, data.Length);
+            responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytesRead);
+            
+            bytes = System.Text.Encoding.UTF8.GetBytes("*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n");
+            stream.Write(bytes, 0, bytes.Length);
+            
+            bytesRead = stream.Read(data, 0, data.Length);
+            responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytesRead);
         }
         
         var eventLoop = new EventLoop(serverInfo);
