@@ -10,6 +10,8 @@ public class Program
         var argNumber = 0;
         var port = 6379;
         var isMaster = true;
+        var masterHost = "";
+        var masterPort = 0;
         while (argNumber < args.Length)
         {
             if (args[argNumber] == "--port")
@@ -22,7 +24,9 @@ public class Program
             {
                 isMaster = false;
                 argNumber++;
+                masterHost = args[argNumber];
                 argNumber++;
+                masterPort = int.Parse(args[argNumber]);
                 argNumber++;
             }
         }
@@ -37,6 +41,15 @@ public class Program
         var server = new TcpListener(IPAddress.Any, port);
         server.Start();
 
+        if (!isMaster)
+        {
+            // We need to ping the master server
+            var client = new TcpClient(masterHost, masterPort);
+            var stream = client.GetStream();
+            var bytes = System.Text.Encoding.UTF8.GetBytes("*1\r\n$4\r\nping\r\n");
+            stream.Write(bytes, 0, bytes.Length);
+        }
+        
         var eventLoop = new EventLoop(serverInfo);
         var eventLoopThread = new Thread(eventLoop.ProcessCommands);
         eventLoopThread.Start();
