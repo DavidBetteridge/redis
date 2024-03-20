@@ -97,10 +97,11 @@ public class EventLoop
         var bytes = System.Text.Encoding.UTF8.GetBytes(response);
         socket.Send(bytes);
         
-        var rdb = Convert.FromBase64String(EmptyRDBFile);
-        var preamble = System.Text.Encoding.UTF8.GetBytes($"${rdb.Length}\r\n");
-        socket.Send(rdb); 
+        var content = Convert.FromBase64String(EmptyRDBFile);
+        var preamble = System.Text.Encoding.UTF8.GetBytes($"${content.Length}\r\n");
         socket.Send(preamble);
+        socket.Send(content); 
+        
         return null;
     }
     
