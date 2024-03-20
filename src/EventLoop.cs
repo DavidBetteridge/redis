@@ -72,6 +72,11 @@ public class EventLoop
             ExpiresOn = set.Px.HasValue ? (DateTime.UtcNow + TimeSpan.FromMilliseconds(set.Px.Value)) : null
         };
         
+        if (_replicas.Count == 0)
+            Console.WriteLine($"Setting {set.Key} to {set.Value} on replica");
+        else
+            Console.WriteLine($"Setting {set.Key} to {set.Value} on master");
+        
         // Replica the writes
         foreach (var replica in _replicas)
         {
