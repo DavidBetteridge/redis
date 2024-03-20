@@ -75,7 +75,15 @@ public class EventLoop
 
     private string ProcessInfo(Info info)
     {
-        return BulkString($"role:{_serverInfo.Role}");
+        var parts = new[]
+        {
+            $"master_replid:{_serverInfo.MasterReplid}",
+            $"role:{_serverInfo.Role}",
+            $"master_repl_offset:{_serverInfo.MasterReplOffset}",
+        };
+
+        var result = string.Join("\r\n", parts);
+        return BulkString(result);
     }
 
     private string ProcessEcho(Echo echo) => BulkString(echo.Message);

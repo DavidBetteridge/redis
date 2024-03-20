@@ -29,7 +29,9 @@ public class Program
         
         var serverInfo = new ServerInfo
         {
-            Role = isMaster ? "master" : "slave"
+            Role = isMaster ? "master" : "slave",
+            MasterReplOffset = 0,
+            MasterReplid = CreateRandomString(40)
         };
 
         var server = new TcpListener(IPAddress.Any, port);
@@ -47,6 +49,12 @@ public class Program
             var socketConnectionThread = new Thread(socketConnection.Listen);
             socketConnectionThread.Start();
         }
+    }
+
+    private static string CreateRandomString(int length)
+    {
+        var rnd = new Random();
+        return new string(Enumerable.Range(0, length).Select(_ => (char)('a' + rnd.Next(0, 26))).ToArray());
     }
 
     class SocketConnection
