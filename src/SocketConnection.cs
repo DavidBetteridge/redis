@@ -19,12 +19,17 @@ public class SocketConnection
         var buffer = new byte[1024];
         while (true)
         {
-            if (_socket.Receive(buffer) > 0)
+            var length = _socket.Receive(buffer);
+            if (length > 0)
             {
                 var text = System.Text.Encoding.UTF8.GetString(buffer);
+                var raw = buffer[..length];
+                
+                if (_asReplica)
+                    Console.WriteLine(text);
+                
                 var parser = new LrParser(text);
                 var segments = ParseValue(ref parser);
-
                 var type = segments[0].ToLowerInvariant();
 
                 if (_asReplica)
@@ -41,8 +46,8 @@ public class SocketConnection
                     "info" => new Info { Section = segments[1] },
                     "get" => new Get { Key = segments[1] },
                     "set" => segments.Length > 4 && segments[3].ToLowerInvariant() == "px"
-                        ? new Set { Key = segments[1], Value = segments[2], Px = int.Parse(segments[4]) }
-                        : new Set { Key = segments[1], Value = segments[2] },
+                        ? new Set { Raw = raw, Key = segments[1], Value = segments[2], Px = int.Parse(segments[4]) }
+                        : new Set { Raw = raw, Key = segments[1], Value = segments[2] },
                     _ => null
                 };
 

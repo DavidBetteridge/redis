@@ -22,6 +22,7 @@ public class EventLoop
     
     private readonly Dictionary<string, CacheEntry> _cache = new ();
     private readonly ServerInfo _serverInfo;
+    private readonly List<Socket> _replicas = new();
 
     public EventLoop(ServerInfo serverInfo)
     {
@@ -70,6 +71,12 @@ public class EventLoop
             Value = set.Value,
             ExpiresOn = set.Px.HasValue ? (DateTime.UtcNow + TimeSpan.FromMilliseconds(set.Px.Value)) : null
         };
+        
+        // Replica the writes
+        foreach (var replica in _replicas)
+        {
+            replica.Send(set.Raw);
+        }
 
         return SimpleString("OK");
     }
@@ -108,8 +115,9 @@ public class EventLoop
         
         var content = Convert.FromBase64String(EmptyRDBFile);
         var preamble = System.Text.Encoding.UTF8.GetBytes($"${content.Length}\r\n");
-        socket.Send(preamble);
-        socket.Send(content); 
+        socket.Send(preamble.Concat(content).ToArray());
+        
+        _replicas.Add(socket);
         
         return null;
     }

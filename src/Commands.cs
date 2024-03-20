@@ -1,6 +1,9 @@
 namespace codecrafters_redis;
 
-public record Command;
+public record Command
+{
+    public byte[] Raw { get; set; }
+}
 
 public record Ping : Command;
 
