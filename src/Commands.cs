@@ -2,7 +2,7 @@ namespace codecrafters_redis;
 
 public record Command
 {
-    public byte[] Raw { get; set; }
+    public byte[] Raw { get; set; } = default!;
 }
 
 public record Ping : Command;

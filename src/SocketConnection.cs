@@ -24,18 +24,9 @@ public class SocketConnection
             {
                 var text = System.Text.Encoding.UTF8.GetString(buffer);
                 var raw = buffer[..length];
-                
-                if (_asReplica)
-                    Console.WriteLine(text);
-                
                 var parser = new LrParser(text);
                 var segments = ParseValue(ref parser);
                 var type = segments[0].ToLowerInvariant();
-
-                if (_asReplica)
-                {
-                    Console.WriteLine($"Replica received: {type}");
-                }
                 
                 Command? command = type switch
                 {
