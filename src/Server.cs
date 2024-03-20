@@ -1,19 +1,41 @@
 using System.Net;
 using System.Net.Sockets;
 using codecrafters_redis;
+using Command = codecrafters_redis.Command;
 
 public class Program
 {
     public static void Main(string[] args)
     {
+        var argNumber = 0;
         var port = 6379;
-        if (args.Length > 1 && args[0] == "--port")
-            port = int.Parse(args[1]);
+        var isMaster = true;
+        while (argNumber < args.Length)
+        {
+            if (args[argNumber] == "--port")
+            {
+                argNumber++;
+                port = int.Parse(args[argNumber]);
+                argNumber++;
+            }
+            else if (args[argNumber] == "--replicaof")
+            {
+                isMaster = false;
+                argNumber++;
+                argNumber++;
+                argNumber++;
+            }
+        }
         
+        var serverInfo = new ServerInfo
+        {
+            Role = isMaster ? "master" : "slave"
+        };
+
         var server = new TcpListener(IPAddress.Any, port);
         server.Start();
 
-        var eventLoop = new EventLoop();
+        var eventLoop = new EventLoop(serverInfo);
         var eventLoopThread = new Thread(eventLoop.ProcessCommands);
         eventLoopThread.Start();
 

@@ -13,6 +13,12 @@ public class EventLoop
     private readonly BlockingCollection<(Socket, Command)> _commandQueue = new();
     
     private readonly Dictionary<string, CacheEntry> _cache = new ();
+    private readonly ServerInfo _serverInfo;
+
+    public EventLoop(ServerInfo serverInfo)
+    {
+        _serverInfo = serverInfo;
+    }
     
     public void AddCommand(Socket socket, Command command)
     {
@@ -69,7 +75,7 @@ public class EventLoop
 
     private string ProcessInfo(Info info)
     {
-        return BulkString("role:master");
+        return BulkString($"role:{_serverInfo.Role}");
     }
 
     private string ProcessEcho(Echo echo) => BulkString(echo.Message);
