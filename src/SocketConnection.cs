@@ -27,6 +27,11 @@ public class SocketConnection
 
                 var type = segments[0].ToLowerInvariant();
 
+                if (_asReplica)
+                {
+                    Console.WriteLine($"Replica received: {type}");
+                }
+                
                 Command? command = type switch
                 {
                     "replconf" => new Replconf(),
