@@ -72,9 +72,9 @@ public class Program
             bytes = System.Text.Encoding.UTF8.GetBytes("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n");
             stream.Write(bytes, 0, bytes.Length);
             
-            var masterSocketConnection = new SocketConnection(eventLoop, client.Client, asReplica: true);
-            var masterSocketConnectionThread = new Thread(masterSocketConnection.Listen);
-            masterSocketConnectionThread.Start();
+            // var masterSocketConnection = new SocketConnection(eventLoop, client.Client, asReplica: true);
+            // var masterSocketConnectionThread = new Thread(masterSocketConnection.Listen);
+            // masterSocketConnectionThread.Start();
         }
 
         while (true)
