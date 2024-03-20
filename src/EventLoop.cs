@@ -41,6 +41,7 @@ public class EventLoop
                     Get get => ProcessGet(get),
                     Set set => ProcessSet(set),
                     Info info => ProcessInfo(info),
+                    Replconf replconf => ProcessReplconf(replconf),
                     _ => throw new NotImplementedException()
                 };
                 var bytes = System.Text.Encoding.UTF8.GetBytes(response);
@@ -88,6 +89,7 @@ public class EventLoop
 
     private string ProcessEcho(Echo echo) => BulkString(echo.Message);
     private string ProcessPing() => SimpleString("PONG");
+    private string ProcessReplconf(Replconf replconf) => SimpleString("OK");
     
     private string SimpleString(string str) => $"+{str}\r\n";
     private string BulkString(string str) => $"${str.Length}\r\n{str}\r\n";

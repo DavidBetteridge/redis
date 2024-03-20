@@ -115,6 +115,7 @@ public class Program
 
                     Command? command = type switch
                     {
+                        "replconf" => new Replconf(),
                         "ping" => new Ping(),
                         "echo" => new Echo { Message = segments[1] },
                         "info" => new Info { Section = segments[1] },

@@ -25,3 +25,7 @@ public record Info : Command
 {
     public string Section { get; init; } = default!;
 }
+
+public record Replconf : Command;
+
+
