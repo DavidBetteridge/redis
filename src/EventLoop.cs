@@ -37,11 +37,12 @@ public class EventLoop
                 var response = command switch
                 {
                     Ping => ProcessPing(),
-                    Echo echo => ProcessEcho(echo),
-                    Get get => ProcessGet(get),
-                    Set set => ProcessSet(set),
-                    Info info => ProcessInfo(info),
-                    Replconf replconf => ProcessReplconf(replconf),
+                    Echo detail => ProcessEcho(detail),
+                    Get detail => ProcessGet(detail),
+                    Set detail => ProcessSet(detail),
+                    Info detail => ProcessInfo(detail),
+                    Replconf detail => ProcessReplconf(detail),
+                    Psync detail => ProcessPsync(detail),
                     _ => throw new NotImplementedException()
                 };
                 var bytes = System.Text.Encoding.UTF8.GetBytes(response);
@@ -87,6 +88,11 @@ public class EventLoop
         return BulkString(result);
     }
 
+    private string ProcessPsync(Psync cmd)
+    {
+        return SimpleString($"FULLRESYNC {_serverInfo.MasterReplid} {_serverInfo.MasterReplOffset}");
+    }
+    
     private string ProcessEcho(Echo echo) => BulkString(echo.Message);
     private string ProcessPing() => SimpleString("PONG");
     private string ProcessReplconf(Replconf replconf) => SimpleString("OK");

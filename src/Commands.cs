@@ -28,4 +28,10 @@ public record Info : Command
 
 public record Replconf : Command;
 
+public record Psync : Command
+{
+    public string ReplicationId { get; init; } = default!;
+    public int ReplicationOffset { get; init; }
+}
+
 

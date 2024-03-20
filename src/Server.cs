@@ -116,6 +116,7 @@ public class Program
                     Command? command = type switch
                     {
                         "replconf" => new Replconf(),
+                        "psync" => new Psync { ReplicationId = segments[1], ReplicationOffset = int.Parse(segments[2])},
                         "ping" => new Ping(),
                         "echo" => new Echo { Message = segments[1] },
                         "info" => new Info { Section = segments[1] },
