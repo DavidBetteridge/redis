@@ -64,6 +64,9 @@ public class Program
             
             bytesRead = stream.Read(data, 0, data.Length);
             responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytesRead);
+            
+            bytes = System.Text.Encoding.UTF8.GetBytes("*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n");
+            stream.Write(bytes, 0, bytes.Length);
         }
         
         var eventLoop = new EventLoop(serverInfo);
