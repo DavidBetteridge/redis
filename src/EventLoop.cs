@@ -49,13 +49,13 @@ public class EventLoop
                     Ping => ProcessPing(),
                     Echo detail => ProcessEcho(detail),
                     Get detail => ProcessGet(detail),
-                    Set detail => ProcessSet(detail),
+                    Set detail => ProcessSet(detail, asReplica),
                     Info detail => ProcessInfo(detail),
                     Replconf detail => ProcessReplconf(detail),
                     Psync detail => ProcessPsync(detail, socket),
                     _ => throw new NotImplementedException()
                 };
-                if (response is not null && !asReplica)
+                if (response is not null)
                 {
                     var bytes = System.Text.Encoding.UTF8.GetBytes(response);
                     socket.Send(bytes);
@@ -64,7 +64,7 @@ public class EventLoop
         }
     }
 
-    private string ProcessSet(Set set)
+    private string? ProcessSet(Set set, bool asReplica)
     {
         _cache[set.Key] = new CacheEntry
         {
@@ -72,18 +72,17 @@ public class EventLoop
             ExpiresOn = set.Px.HasValue ? (DateTime.UtcNow + TimeSpan.FromMilliseconds(set.Px.Value)) : null
         };
         
-        if (_replicas.Count == 0)
-            Console.WriteLine($"Setting {set.Key} to {set.Value} on replica");
-        else
-            Console.WriteLine($"Setting {set.Key} to {set.Value} on master");
-        
         // Replica the writes
         foreach (var replica in _replicas)
         {
             replica.Send(set.Raw);
         }
 
-        return SimpleString("OK");
+        if (!asReplica)
+            return SimpleString("OK");
+
+        // Sets on replicas have no response
+        return null;
     }
 
     private string ProcessGet(Get get)
