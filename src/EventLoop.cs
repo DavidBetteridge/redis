@@ -66,6 +66,11 @@ public class EventLoop
 
     private string? ProcessSet(Set set, bool asReplica)
     {
+        if (asReplica)
+        {
+            Console.WriteLine("Replica storing value for " + set.Key);
+        }
+        
         _cache[set.Key] = new CacheEntry
         {
             Value = set.Value,
@@ -75,8 +80,6 @@ public class EventLoop
         // Replica the writes
         foreach (var replica in _replicas)
         {
-            var text = System.Text.Encoding.UTF8.GetString(set.Raw);
-            Console.WriteLine("Sending " + text);
             replica.Send(set.Raw);
         }
 
@@ -93,10 +96,11 @@ public class EventLoop
         {
             if (!cacheEntry.ExpiresOn.HasValue || (cacheEntry.ExpiresOn.Value > DateTime.UtcNow))
             {
+                Console.WriteLine("Asked for " + get.Key + " " + cacheEntry.Value);
                 return BulkString(cacheEntry.Value);
             }
         }
-
+        Console.WriteLine("Asked for " + get.Key + " MISSING");
         return NullBulkString;
     }
 

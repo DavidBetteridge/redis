@@ -22,35 +22,43 @@ public class SocketConnection
             var length = _socket.Receive(buffer);
             if (length > 0)
             {
-                var text = System.Text.Encoding.UTF8.GetString(buffer);
                 var raw = buffer[..length];
-                var parser = new LrParser(text);
-                var segments = ParseValue(ref parser);
-                var type = segments[0].ToLowerInvariant();
+                var text = System.Text.Encoding.UTF8.GetString(raw);
                 
-                Command? command = type switch
+                var parser = new LrParser(text);
+
+                while (!parser.EOF)
                 {
-                    "replconf" => new Replconf(),
-                    "psync" => new Psync { ReplicationId = segments[1], ReplicationOffset = int.Parse(segments[2])},
-                    "ping" => new Ping(),
-                    "echo" => new Echo { Message = segments[1] },
-                    "info" => new Info { Section = segments[1] },
-                    "get" => new Get { Key = segments[1] },
-                    "set" => segments.Length > 4 && segments[3].ToLowerInvariant() == "px"
-                        ? new Set { Raw = raw, Key = segments[1], Value = segments[2], Px = int.Parse(segments[4]) }
-                        : new Set { Raw = raw, Key = segments[1], Value = segments[2] },
-                    _ => null
-                };
+                    Console.WriteLine("Pending:" + parser.ReadToEnd());
+                    
+                    var segments = ParseValue(ref parser);
+                    var type = segments[0].ToLowerInvariant();
 
-                Console.WriteLine(command);
-
-                if (command is not null)
-                    _eventLoop.AddCommand( new CommandParams
+                    Command? command = type switch
                     {
-                        Command = command, 
-                        Socket = _socket, 
-                        AsReplica = _asReplica
-                    });
+                        "replconf" => new Replconf(),
+                        "psync" => new Psync
+                            { ReplicationId = segments[1], ReplicationOffset = int.Parse(segments[2]) },
+                        "ping" => new Ping(),
+                        "echo" => new Echo { Message = segments[1] },
+                        "info" => new Info { Section = segments[1] },
+                        "get" => new Get { Key = segments[1] },
+                        "set" => segments.Length > 4 && segments[3].ToLowerInvariant() == "px"
+                            ? new Set { Raw = raw, Key = segments[1], Value = segments[2], Px = int.Parse(segments[4]) }
+                            : new Set { Raw = raw, Key = segments[1], Value = segments[2] },
+                        _ => null
+                    };
+
+                    Console.WriteLine(command);
+
+                    if (command is not null)
+                        _eventLoop.AddCommand(new CommandParams
+                        {
+                            Command = command,
+                            Socket = _socket,
+                            AsReplica = _asReplica
+                        });
+                }
             }
         }
     }

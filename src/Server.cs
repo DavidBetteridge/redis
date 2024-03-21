@@ -81,6 +81,8 @@ public class Program
             var masterSocketConnection = new SocketConnection(eventLoop, client.Client, asReplica: true);
             var masterSocketConnectionThread = new Thread(masterSocketConnection.Listen);
             masterSocketConnectionThread.Start();
+            
+            Console.WriteLine("DAVID Connected to master");
         }
 
         while (true)

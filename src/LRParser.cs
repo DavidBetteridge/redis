@@ -58,6 +58,8 @@ public ref struct LrParser
         _line = _line[length..];
         return str.ToString();
     }
+
+    public string ReadToEnd() => _line.ToString();
 }
 
 public class ParsingException : Exception
