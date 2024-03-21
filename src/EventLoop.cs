@@ -75,6 +75,8 @@ public class EventLoop
         // Replica the writes
         foreach (var replica in _replicas)
         {
+            var text = System.Text.Encoding.UTF8.GetString(set.Raw);
+            Console.WriteLine("Sending " + text);
             replica.Send(set.Raw);
         }
 
