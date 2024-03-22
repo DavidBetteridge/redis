@@ -42,8 +42,6 @@ public class SocketConnection
                 
                 while (!parser.EOF)
                 {
-                    Console.WriteLine("Pending:" + parser.ReadToEnd());
-                    
                     var segments = ParseValue(ref parser);
                     var type = segments[0].ToLowerInvariant();
 
