@@ -24,6 +24,16 @@ public ref struct LrParser
         return false;
     }
     
+    public bool TryMatch(string match)
+    {
+        if (!EOF && _line.StartsWith(match))
+        {
+            _line = _line[(match.Length)..];
+            return true;
+        }
+        return false;
+    }
+    
     public void Match(string match)
     {
         if (EOF || !_line.StartsWith(match))
@@ -33,6 +43,15 @@ public ref struct LrParser
         _line = _line[(match.Length)..];
     }
 
+    public void Match(char match)
+    {
+        if (EOF || _line[0] != match)
+        {
+            throw new ParsingException($"Expected {match}");
+        }
+        _line = _line[1..];
+    }
+    
     public char EatChar()
     {
         var c = _line[0];
@@ -60,6 +79,13 @@ public ref struct LrParser
     }
 
     public string ReadToEnd() => _line.ToString();
+
+    public void EatBytes(int contentLength)
+    {
+        var bytes = _line[..contentLength];
+        _line = _line[contentLength..];
+        
+    }
 }
 
 public class ParsingException : Exception

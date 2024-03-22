@@ -27,9 +27,22 @@ public class SocketConnection
                 
                 var parser = new LrParser(text);
 
+                if (parser.TryMatch("FULLRESYNC "))
+                {
+                    //FULLRESYNC {_serverInfo.MasterReplid} {_serverInfo.MasterReplOffset} 
+                    var masterReplid = parser.EatNumber();
+                    parser.Match(' ');
+                    var masterReplOffset = parser.EatString(40);
+                    
+                    //${content.Length}\r\n"
+                    var contentLength = parser.EatNumber();
+                    parser.Match("\r\n");
+                    parser.EatBytes(contentLength);
+                }
+                
                 while (!parser.EOF)
                 {
-                    // Console.WriteLine("Pending:" + parser.ReadToEnd());
+                    Console.WriteLine("Pending:" + parser.ReadToEnd());
                     
                     var segments = ParseValue(ref parser);
                     var type = segments[0].ToLowerInvariant();
